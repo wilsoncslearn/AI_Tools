@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LLM 试金石</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500;6..72,600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="page">
+  <main class="card" role="main">
+
+    <!-- Brand -->
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">◇</span>
+      <h1 class="brand-title">LLM 试金石</h1>
+      <p class="brand-desc">连接 · 测试 · 验证</p>
+    </div>
+
+    <!-- Form -->
+    <form id="testForm" autocomplete="off" novalidate>
+
+      <div class="field">
+        <label for="baseUrl">Base URL</label>
+        <input type="url" id="baseUrl" placeholder="https://api.openai.com" spellcheck="false" autofocus>
+      </div>
+
+      <div class="field">
+        <label for="apiKey">API Key</label>
+        <div class="input-wrap">
+          <input type="password" id="apiKey" placeholder="sk-..." spellcheck="false">
+          <button type="button" class="eye-btn" id="toggleKey" aria-label="显示或隐藏 API Key" tabindex="-1">
+            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/><line x1="1" y1="1" x2="23" y2="23" class="eye-slash"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <button type="button" class="btn-secondary btn-fetch" id="fetchModelsBtn" disabled>
+        获取模型列表
+      </button>
+
+      <!-- Model section (click button to load) -->
+      <div class="field model-section" id="modelSection" hidden>
+        <div class="label-row">
+          <label for="modelSelect">Models</label>
+          <span class="model-count" id="modelCount"></span>
+        </div>
+        <div class="model-loader" id="modelLoader">
+          <span class="spinner"></span>
+          <span>正在获取模型列表…</span>
+        </div>
+        <select id="modelSelect" multiple size="10"></select>
+        <div class="model-actions">
+          <button type="button" class="btn-secondary" id="selectAllModels">全选</button>
+          <button type="button" class="btn-secondary" id="clearModels">清空</button>
+        </div>
+        <p class="field-msg field-hint">可按 Ctrl / Shift 多选，也可以直接全选批量测试。</p>
+        <p class="field-msg field-err" id="modelErr"></p>
+      </div>
+
+      <button type="submit" class="btn-submit" id="testBtn" disabled>
+        <span class="btn-label">测试连接</span>
+        <span class="btn-spinner"></span>
+      </button>
+
+    </form>
+
+    <!-- Result -->
+    <div class="result" id="resultArea" hidden>
+      <div class="result-bar"></div>
+      <div id="resultInner"></div>
+    </div>
+
+    <!-- History -->
+    <section class="history" id="historySection" hidden>
+      <div class="history-head">
+        <h2>测试记录</h2>
+        <div class="history-actions">
+          <button type="button" class="btn-secondary" id="exportHistory">导出 CSV</button>
+          <button type="button" class="btn-secondary" id="clearHistory">清空记录</button>
+        </div>
+      </div>
+      <div class="history-table-wrap">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th><button type="button" class="th-sort" data-sort="model">模型 <span class="sort-arrow"></span></button></th>
+              <th><button type="button" class="th-sort" data-sort="time">测试时间 <span class="sort-arrow"></span></button></th>
+              <th><button type="button" class="th-sort" data-sort="ok">结果 <span class="sort-arrow"></span></button></th>
+              <th><button type="button" class="th-sort" data-sort="speed">速度 <span class="sort-arrow"></span></button></th>
+              <th><button type="button" class="th-sort" data-sort="message">回复 / 错误 <span class="sort-arrow"></span></button></th>
+            </tr>
+          </thead>
+          <tbody id="historyBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

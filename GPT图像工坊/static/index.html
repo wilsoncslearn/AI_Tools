@@ -74,7 +74,21 @@
     color: var(--ink);
   }
   .masthead .left { display: flex; gap: 18px; align-items: baseline; }
+  .masthead .right { display: flex; gap: 14px; align-items: center; justify-content: flex-end; text-align: right; }
   .masthead .dot { color: var(--accent); }
+  button.language-toggle {
+    padding: 5px 9px;
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--rule);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+  }
+  button.language-toggle:hover:not(:disabled) {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--bg);
+  }
 
   /* ── Title block ───────────────────────────────────── */
   .title-block {
@@ -435,6 +449,8 @@
 
   @media (max-width: 720px) {
     .page { padding: 20px 24px 60px; }
+    .masthead { align-items: flex-start; gap: 16px; }
+    .masthead .left, .masthead .right { flex-wrap: wrap; }
     .title-block { grid-template-columns: 1fr; gap: 24px; }
     .settings-grid, .controls { grid-template-columns: 1fr; gap: 24px; }
     .plate-grid { grid-template-columns: 1fr; padding: 20px; }
@@ -449,38 +465,41 @@
     <!-- Masthead -->
     <header class="masthead reveal">
       <div class="left">
-        <span>Prompt &amp; Image</span>
+        <span data-i18n="brand">Prompt &amp; Image</span>
         <span class="dot">●</span>
-        <span>Vol. 01</span>
+        <span data-i18n="volume">Vol. 01</span>
       </div>
-      <div>An image is a sentence made visible</div>
+      <div class="right">
+        <button class="language-toggle" id="langToggle" type="button" onclick="toggleLanguage()" aria-label="Switch language">中文</button>
+        <span data-i18n="tagline">An image is a sentence made visible</span>
+      </div>
     </header>
 
     <!-- Title -->
     <section class="title-block">
-      <h1 class="reveal">Make a picture<br>from <em>words.</em></h1>
-      <p class="lede reveal">A small instrument for translating a sentence into a single frame — quiet, deliberate, and unhurried.</p>
+      <h1 class="reveal" data-i18n="heroTitle">Make a picture<br>from <em>words.</em></h1>
+      <p class="lede reveal" data-i18n="heroLede">A small instrument for translating a sentence into a single frame — quiet, deliberate, and unhurried.</p>
     </section>
 
     <!-- API configuration -->
     <section class="settings-section">
       <div class="section-label reveal">
-        <span class="num">I.</span><span>Connection</span><span class="rule"></span>
+        <span class="num">I.</span><span data-i18n="connection">Connection</span><span class="rule"></span>
       </div>
       <div class="settings-grid">
         <div class="field reveal">
-          <label for="apiBaseUrl">API URL</label>
+          <label for="apiBaseUrl" data-i18n="apiUrl">API URL</label>
           <input id="apiBaseUrl" type="url" autocomplete="url" placeholder="https://example.com/v1">
         </div>
         <div class="field reveal">
-          <label for="apiKey">API Key</label>
+          <label for="apiKey" data-i18n="apiKey">API Key</label>
           <div class="secret-control">
             <input id="apiKey" type="password" autocomplete="off" placeholder="sk-…">
-            <button class="key-toggle" id="keyToggle" type="button" onclick="toggleApiKey()">Show</button>
+            <button class="key-toggle" id="keyToggle" type="button" onclick="toggleApiKey()" data-i18n="showKey">Show</button>
           </div>
         </div>
         <div class="config-actions reveal">
-          <button id="saveConfigBtn" type="button" onclick="saveConfig()">Save</button>
+          <button id="saveConfigBtn" type="button" onclick="saveConfig()" data-i18n="save">Save</button>
           <span class="config-status" id="configStatus"></span>
         </div>
       </div>
@@ -489,15 +508,15 @@
     <!-- Prompt -->
     <section class="prompt-section">
       <div class="section-label reveal">
-        <span class="num">II.</span><span>Prompt</span><span class="rule"></span>
+        <span class="num">II.</span><span data-i18n="promptLabel">Prompt</span><span class="rule"></span>
       </div>
-      <textarea id="prompt" class="reveal" placeholder="Describe what you wish to see…">A small red apple on a linen table, morning light, soft shadows</textarea>
+      <textarea id="prompt" class="reveal" placeholder="Describe what you wish to see…" data-i18n-placeholder="promptPlaceholder">A small red apple on a linen table, morning light, soft shadows</textarea>
     </section>
 
     <!-- Controls -->
     <section class="controls">
       <div class="field reveal">
-        <label>Model</label>
+        <label data-i18n="model">Model</label>
         <select id="model">
           <option value="gpt-image-1.5">gpt-image-1.5</option>
           <option value="gpt-image-2">gpt-image-2</option>
@@ -505,7 +524,7 @@
         </select>
       </div>
       <div class="field reveal">
-        <label>Format</label>
+        <label data-i18n="format">Format</label>
         <select id="size">
           <option value="256x256">256 × 256</option>
           <option value="512x512" selected>512 × 512</option>
@@ -513,12 +532,12 @@
         </select>
       </div>
       <div class="field reveal">
-        <label>Count</label>
+        <label data-i18n="count">Count</label>
         <select id="count">
-          <option value="1" selected>1 plate</option>
-          <option value="2">2 plates</option>
-          <option value="3">3 plates</option>
-          <option value="4">4 plates</option>
+          <option value="1" selected data-i18n="count1">1 plate</option>
+          <option value="2" data-i18n="count2">2 plates</option>
+          <option value="3" data-i18n="count3">3 plates</option>
+          <option value="4" data-i18n="count4">4 plates</option>
         </select>
       </div>
     </section>
@@ -526,20 +545,20 @@
     <!-- Submit -->
     <div class="submit-row">
       <button id="btn" class="reveal" onclick="generate()">
-        Generate <span class="arrow">→</span>
+        <span data-i18n="generate">Generate</span> <span class="arrow">→</span>
       </button>
-      <span class="hint reveal">⌘ + &crarr;</span>
+      <span class="hint reveal" data-i18n="hint">⌘ + ↵</span>
     </div>
 
     <!-- Result -->
     <section class="result-section">
       <div class="section-label">
-        <span class="num">III.</span><span>Plate</span><span class="rule"></span>
+        <span class="num">III.</span><span data-i18n="plate">Plate</span><span class="rule"></span>
       </div>
       <div class="result-frame" id="result">
         <div class="placeholder">
           <span class="glyph">❦</span>
-          The image will appear here.
+          <span data-i18n="placeholder">The image will appear here.</span>
         </div>
       </div>
       <div class="caption" id="caption" style="display:none">
@@ -550,26 +569,150 @@
 
     <!-- Colophon -->
     <footer class="colophon">
-      <span>Set in Newsreader &amp; JetBrains Mono</span>
-      <span>Issued by dss.josiny.com</span>
+      <span data-i18n="footerType">Set in Newsreader &amp; JetBrains Mono</span>
     </footer>
   </div>
 
 <script>
-function setConfigStatus(message, isError = false) {
+const translations = {
+  en: {
+    pageTitle: 'Prompt → Image',
+    brand: 'Prompt & Image',
+    volume: 'Vol. 01',
+    tagline: 'An image is a sentence made visible',
+    heroTitle: 'Make a picture<br>from <em>words.</em>',
+    heroLede: 'A small instrument for translating a sentence into a single frame — quiet, deliberate, and unhurried.',
+    connection: 'Connection',
+    apiUrl: 'API URL',
+    apiKey: 'API Key',
+    showKey: 'Show',
+    hideKey: 'Hide',
+    save: 'Save',
+    saving: 'Saving…',
+    configLoaded: 'Configuration loaded',
+    apiKeyRequired: 'API Key required',
+    saved: 'Saved · active now',
+    unableLoadConfig: 'Unable to load configuration',
+    unableSaveConfig: 'Unable to save configuration',
+    promptLabel: 'Prompt',
+    promptPlaceholder: 'Describe what you wish to see…',
+    promptRequired: 'A prompt is required…',
+    model: 'Model',
+    format: 'Format',
+    count: 'Count',
+    count1: '1 plate',
+    count2: '2 plates',
+    count3: '3 plates',
+    count4: '4 plates',
+    generate: 'Generate',
+    generating: 'Generating',
+    generatingPlates: n => `Generating ${n} plates`,
+    hint: '⌘ / Ctrl + ↵',
+    plate: 'Plate',
+    placeholder: 'The image will appear here.',
+    failed: 'Failed',
+    plateSingle: 'Plate I',
+    plateMulti: n => `Plates I–${n}`,
+    savedToOutput: ' · saved to output/',
+    engraved: sec => `Engraved in ${sec}s`,
+    footerType: 'Set in Newsreader & JetBrains Mono',
+    langToggle: '中文',
+    switchLanguage: 'Switch language',
+  },
+  zh: {
+    pageTitle: '提示词 → 图像',
+    brand: '提示词与图像',
+    volume: '第 01 卷',
+    tagline: '图像，是被看见的一句话',
+    heroTitle: '把文字<br>变成<em>图像。</em>',
+    heroLede: '一个把句子翻译成画面的本地小工具——安静、直接，也足够好用。',
+    connection: '连接配置',
+    apiUrl: 'API 地址',
+    apiKey: 'API 密钥',
+    showKey: '显示',
+    hideKey: '隐藏',
+    save: '保存',
+    saving: '保存中…',
+    configLoaded: '配置已加载',
+    apiKeyRequired: '需要 API Key',
+    saved: '已保存 · 立即生效',
+    unableLoadConfig: '无法加载配置',
+    unableSaveConfig: '无法保存配置',
+    promptLabel: '提示词',
+    promptPlaceholder: '描述你想看到的画面…',
+    promptRequired: '请输入提示词…',
+    model: '模型',
+    format: '尺寸',
+    count: '数量',
+    count1: '1 张',
+    count2: '2 张',
+    count3: '3 张',
+    count4: '4 张',
+    generate: '生成',
+    generating: '生成中',
+    generatingPlates: n => `正在生成 ${n} 张`,
+    hint: '⌘ / Ctrl + 回车',
+    plate: '作品',
+    placeholder: '生成的图片会显示在这里。',
+    failed: '生成失败',
+    plateSingle: '作品 I',
+    plateMulti: n => `作品 I–${n}`,
+    savedToOutput: ' · 已保存到 output/',
+    engraved: sec => `用时 ${sec}s`,
+    footerType: '字体：Newsreader 与 JetBrains Mono',
+    langToggle: 'EN',
+    switchLanguage: '切换语言',
+  },
+};
+
+let currentLang = localStorage.getItem('promptImageLang') || 'zh';
+let configStatusState = null;
+
+function t(key, ...args) {
+  const value = translations[currentLang][key] ?? translations.en[key] ?? key;
+  return typeof value === 'function' ? value(...args) : value;
+}
+
+function applyLanguage() {
+  document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
+  document.title = t('pageTitle');
+  document.querySelectorAll('[data-i18n]').forEach(element => {
+    element.innerHTML = t(element.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+    element.placeholder = t(element.dataset.i18nPlaceholder);
+  });
+  const langToggle = document.getElementById('langToggle');
+  langToggle.textContent = t('langToggle');
+  langToggle.setAttribute('aria-label', t('switchLanguage'));
+  const keyToggle = document.getElementById('keyToggle');
+  keyToggle.textContent = document.getElementById('apiKey').type === 'password' ? t('showKey') : t('hideKey');
+}
+
+function toggleLanguage() {
+  currentLang = currentLang === 'zh' ? 'en' : 'zh';
+  localStorage.setItem('promptImageLang', currentLang);
+  applyLanguage();
+  if (configStatusState) {
+    setConfigStatus(t(configStatusState), configStatusState === 'apiKeyRequired', configStatusState);
+  }
+}
+
+function setConfigStatus(message, isError = false, state = null) {
   const status = document.getElementById('configStatus');
   status.textContent = message;
   status.classList.toggle('error', isError);
+  configStatusState = state;
 }
 
 async function loadConfig() {
   try {
     const response = await fetch('/api/config');
     const data = await response.json();
-    if (!response.ok) throw new Error(data.detail || 'Unable to load configuration');
+    if (!response.ok) throw new Error(data.detail || t('unableLoadConfig'));
     document.getElementById('apiBaseUrl').value = data.base_url || '';
     document.getElementById('apiKey').value = data.api_key || '';
-    setConfigStatus(data.api_key ? 'Configuration loaded' : 'API Key required', !data.api_key);
+    setConfigStatus(data.api_key ? t('configLoaded') : t('apiKeyRequired'), !data.api_key, data.api_key ? 'configLoaded' : 'apiKeyRequired');
   } catch (error) {
     setConfigStatus(error.message, true);
   }
@@ -580,8 +723,8 @@ async function saveConfig() {
   const apiKey = document.getElementById('apiKey').value.trim();
   const button = document.getElementById('saveConfigBtn');
   button.disabled = true;
-  button.textContent = 'Saving…';
-  setConfigStatus('Saving');
+  button.textContent = t('saving');
+  setConfigStatus(t('saving'), false, 'saving');
 
   try {
     const response = await fetch('/api/config', {
@@ -590,15 +733,15 @@ async function saveConfig() {
       body: JSON.stringify({ base_url: baseUrl, api_key: apiKey }),
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.detail || 'Unable to save configuration');
+    if (!response.ok) throw new Error(data.detail || t('unableSaveConfig'));
     document.getElementById('apiBaseUrl').value = data.base_url;
     document.getElementById('apiKey').value = data.api_key;
-    setConfigStatus('Saved · active now');
+    setConfigStatus(t('saved'), false, 'saved');
   } catch (error) {
     setConfigStatus(error.message, true);
   } finally {
     button.disabled = false;
-    button.textContent = 'Save';
+    button.textContent = t('save');
   }
 }
 
@@ -607,7 +750,7 @@ function toggleApiKey() {
   const toggle = document.getElementById('keyToggle');
   const show = input.type === 'password';
   input.type = show ? 'text' : 'password';
-  toggle.textContent = show ? 'Hide' : 'Show';
+  toggle.textContent = show ? t('hideKey') : t('showKey');
 }
 
 function generate() {
@@ -622,14 +765,14 @@ function generate() {
   if (!prompt) { flashEmpty(); return; }
 
   btn.disabled = true;
-  btn.innerHTML = 'Generating <span class="arrow">…</span>';
+  btn.innerHTML = `${t('generating')} <span class="arrow">…</span>`;
   cap.style.display = 'none';
   result.innerHTML = `
     <div class="loading">
       <div class="loading-label" id="loadingLabel"></div>
       <div class="loading-bar"></div>
     </div>`;
-  const lbl = n > 1 ? `Generating ${n} plates` : "Generating";
+  const lbl = n > 1 ? t('generatingPlates', n) : t('generating');
   document.getElementById('loadingLabel').innerHTML =
     [...lbl].map(c => c === ' ' ? '<span>&nbsp;</span>' : `<span>${c}</span>`).join('');
 
@@ -641,17 +784,17 @@ function generate() {
   })
   .then(r => r.json().then(d => ({ ok: r.ok, d })))
   .then(({ ok, d }) => {
-    if (!ok) throw new Error(d.detail || 'Failed');
+    if (!ok) throw new Error(d.detail || t('failed'));
     const images = Array.isArray(d.images) && d.images.length ? d.images : [{ data_url: d.data_url }];
     result.innerHTML = `
       <div class="plate-grid ${images.length === 1 ? 'single' : ''}">
         ${images.map((image, index) => `<img src="${image.file_url || image.data_url}" alt="plate ${index + 1}">`).join('')}
       </div>`;
     const sec = ((Date.now() - t0) / 1000).toFixed(1);
-    const plateLabel = images.length === 1 ? 'Plate I' : `Plates I–${images.length}`;
+    const plateLabel = images.length === 1 ? t('plateSingle') : t('plateMulti', images.length);
     document.getElementById('cap-left').textContent  = `${plateLabel} · ${d.model} · ${d.size}`;
-    const saved = images.every(image => image.file_path) ? ' · saved to output/' : '';
-    document.getElementById('cap-right').textContent = `Engraved in ${sec}s${saved}`;
+    const saved = images.every(image => image.file_path) ? t('savedToOutput') : '';
+    document.getElementById('cap-right').textContent = `${t('engraved', sec)}${saved}`;
     cap.style.display = 'flex';
   })
   .catch(e => {
@@ -659,17 +802,17 @@ function generate() {
   })
   .finally(() => {
     btn.disabled = false;
-    btn.innerHTML = 'Generate <span class="arrow">→</span>';
+    btn.innerHTML = `<span data-i18n="generate">${t('generate')}</span> <span class="arrow">→</span>`;
   });
 }
 
 function flashEmpty() {
   const ta = document.getElementById('prompt');
   ta.style.borderBottomColor = 'var(--accent)';
-  ta.placeholder = 'A prompt is required…';
+  ta.placeholder = t('promptRequired');
   setTimeout(() => {
     ta.style.borderBottomColor = '';
-    ta.placeholder = 'Describe what you wish to see…';
+    ta.placeholder = t('promptPlaceholder');
   }, 1600);
 }
 
@@ -687,6 +830,7 @@ document.getElementById('prompt').addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generate();
 });
 
+applyLanguage();
 loadConfig();
 </script>
 </body>

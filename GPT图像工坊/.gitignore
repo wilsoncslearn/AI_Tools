@@ -1,0 +1,8 @@
+.env
+__pycache__/
+*.py[cod]
+output/
+server.pid
+server.*.log
+.venv/
+venv/

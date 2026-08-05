@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Prompt &rarr; Image</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FAF9F5;
+    --bg-deep: #F0EDE4;
+    --ink: #141413;
+    --ink-soft: #2A2725;
+    --muted: #6B6862;
+    --rule: #D9D4C5;
+    --rule-fine: #E8E4D7;
+    --accent: #c96442;
+    --accent-soft: #D9835E;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body { background: var(--bg); }
+  html {
+    scrollbar-color: var(--accent-soft) var(--bg-deep);
+    scrollbar-width: thin;
+  }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: var(--bg-deep); }
+  ::-webkit-scrollbar-thumb {
+    background: #c9bca8;
+    border: 2px solid var(--bg-deep);
+    border-radius: 0;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent-soft); }
+  body {
+    font-family: "Newsreader", "Source Serif Pro", Georgia, serif;
+    font-feature-settings: "ss01", "kern", "liga";
+    color: var(--ink);
+    min-height: 100vh;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Subtle paper grain */
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.08  0 0 0 0 0.07  0 0 0 0 0.05  0 0 0 0.04 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    pointer-events: none;
+    z-index: 0;
+    mix-blend-mode: multiply;
+    opacity: 0.6;
+  }
+
+  .page {
+    position: relative; z-index: 1;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 28px 56px 80px;
+  }
+
+  /* ── Masthead ──────────────────────────────────────── */
+  .masthead {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--ink);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .masthead .left { display: flex; gap: 18px; align-items: baseline; }
+  .masthead .dot { color: var(--accent); }
+
+  /* ── Title block ───────────────────────────────────── */
+  .title-block {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 40px;
+    align-items: end;
+    padding: 56px 0 36px;
+    border-bottom: 1px solid var(--rule);
+  }
+  h1 {
+    font-family: "Newsreader", serif;
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-variation-settings: "opsz" 144;
+    font-size: clamp(48px, 8vw, 104px);
+    line-height: 0.95;
+    letter-spacing: -0.025em;
+    color: var(--ink);
+  }
+  h1 em {
+    font-style: italic;
+    font-weight: 300;
+    color: var(--accent);
+  }
+  .lede {
+    max-width: 280px;
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+  .lede::first-letter {
+    font-family: "Newsreader", serif;
+    font-weight: 500;
+    font-size: 38px;
+    float: left;
+    line-height: 0.85;
+    padding: 4px 6px 0 0;
+    color: var(--accent);
+  }
+
+  /* ── Section labels ────────────────────────────────── */
+  .section-label {
+    display: flex; align-items: baseline; gap: 10px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+  .section-label .num { color: var(--accent); }
+  .section-label .rule {
+    flex: 1; height: 1px; background: var(--rule-fine);
+    margin-left: 6px;
+  }
+
+  /* ── API configuration ─────────────────────────────── */
+  .settings-section { padding: 44px 0 0; }
+  .settings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.15fr auto;
+    gap: 28px;
+    align-items: end;
+    padding-bottom: 36px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .field input {
+    width: 100%;
+    min-width: 0;
+    padding: 7px 0;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--rule);
+    color: var(--ink);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.25s;
+  }
+  .field input:focus { border-bottom-color: var(--accent); }
+  .secret-control { position: relative; }
+  .secret-control input { padding-right: 54px; }
+  button.key-toggle {
+    position: absolute;
+    right: 0;
+    bottom: 1px;
+    padding: 7px 0 7px 10px;
+    background: var(--bg);
+    color: var(--muted);
+    border: none;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+  }
+  button.key-toggle:hover:not(:disabled) { background: var(--bg); color: var(--accent); }
+  .config-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+  .config-status {
+    min-height: 16px;
+    max-width: 180px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9.5px;
+    line-height: 1.4;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+  .config-status.error { color: var(--accent); }
+
+  /* ── Input ─────────────────────────────────────────── */
+  .prompt-section { padding: 44px 0 0; }
+  textarea {
+    width: 100%;
+    min-height: 180px;
+    padding: 18px 0 14px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--rule);
+    color: var(--ink);
+    font-family: "Newsreader", serif;
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.6;
+    letter-spacing: -0.005em;
+    outline: none;
+    resize: vertical;
+    transition: border-color 0.25s;
+  }
+  textarea::placeholder { color: #B5B0A4; font-style: italic; font-weight: 300; }
+  textarea:focus { border-bottom-color: var(--accent); }
+
+  /* ── Controls row ──────────────────────────────────── */
+  .controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 48px;
+    align-items: end;
+    padding: 36px 0 32px;
+  }
+  .field { display: flex; flex-direction: column; }
+  .field label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .field select {
+    appearance: none;
+    background-color: var(--bg);
+    color: var(--ink);
+    color-scheme: light;
+    border: none;
+    border-bottom: 1px solid var(--rule);
+    padding: 6px 22px 6px 0;
+    font-family: "Newsreader", serif;
+    font-size: 18px;
+    color: var(--ink);
+    cursor: pointer;
+    outline: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23141413' fill='none' stroke-width='1.2'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 0 center;
+    transition: border-color 0.25s;
+  }
+  .field select:hover { border-bottom-color: var(--ink); }
+  .field select:focus { border-bottom-color: var(--accent); }
+  .field select option {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Newsreader", serif;
+    font-size: 16px;
+  }
+
+  /* ── Submit ────────────────────────────────────────── */
+  .submit-row { display: flex; align-items: center; gap: 20px; padding-bottom: 48px; border-bottom: 1px solid var(--rule); }
+  button {
+    position: relative;
+    display: inline-flex; align-items: center; gap: 12px;
+    padding: 13px 22px 13px 24px;
+    background: var(--ink);
+    color: var(--bg);
+    border: 1px solid var(--ink);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  button:hover:not(:disabled) {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button .arrow {
+    display: inline-block;
+    transition: transform 0.2s;
+  }
+  button:hover:not(:disabled) .arrow { transform: translateX(3px); }
+  .hint {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* ── Result ────────────────────────────────────────── */
+  .result-section { padding: 48px 0 0; }
+  .result-frame {
+    position: relative;
+    min-height: 360px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg-deep);
+    border: 1px solid var(--rule);
+    overflow: hidden;
+  }
+  .result-frame::before,
+  .result-frame::after {
+    content: "";
+    position: absolute;
+    width: 14px; height: 14px;
+    border: 1px solid var(--ink);
+  }
+  .result-frame::before { top: 8px; left: 8px; border-right: none; border-bottom: none; }
+  .result-frame::after  { bottom: 8px; right: 8px; border-left: none; border-top: none; }
+
+  .placeholder {
+    text-align: center;
+    color: var(--muted);
+    font-style: italic;
+    font-size: 18px;
+    padding: 80px 24px;
+  }
+  .placeholder .glyph {
+    display: block;
+    font-size: 64px;
+    color: var(--rule);
+    line-height: 1;
+    margin-bottom: 16px;
+    font-family: "Newsreader", serif;
+  }
+  .result-frame img {
+    max-width: 100%;
+    max-height: 70vh;
+    display: block;
+    animation: fadeIn 0.6s ease-out;
+  }
+  .plate-grid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    padding: 28px;
+  }
+  .plate-grid.single {
+    grid-template-columns: 1fr;
+    place-items: center;
+  }
+  .plate-grid img {
+    width: 100%;
+    height: auto;
+    max-height: none;
+    object-fit: contain;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.98); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  .error {
+    text-align: center;
+    color: var(--accent);
+    font-style: italic;
+    font-size: 16px;
+    padding: 60px 24px;
+  }
+  .error::before { content: "— "; }
+
+  .loading {
+    text-align: center;
+    padding: 80px 24px;
+  }
+  .loading-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--ink);
+    margin-bottom: 22px;
+  }
+  .loading-label span {
+    display: inline-block;
+    opacity: 0;
+    animation: blink 1.4s infinite;
+  }
+  .loading-label span:nth-child(1) { animation-delay: 0.00s; }
+  .loading-label span:nth-child(2) { animation-delay: 0.10s; }
+  .loading-label span:nth-child(3) { animation-delay: 0.20s; }
+  .loading-label span:nth-child(4) { animation-delay: 0.30s; }
+  .loading-label span:nth-child(5) { animation-delay: 0.40s; }
+  .loading-label span:nth-child(6) { animation-delay: 0.50s; }
+  .loading-label span:nth-child(7) { animation-delay: 0.60s; }
+  .loading-label span:nth-child(8) { animation-delay: 0.70s; }
+  .loading-label span:nth-child(9) { animation-delay: 0.80s; }
+  .loading-label span:nth-child(10) { animation-delay: 0.90s; }
+  @keyframes blink { 0%, 100% { opacity: 0.15; } 50% { opacity: 1; } }
+
+  .loading-bar {
+    width: 240px; height: 1px; margin: 0 auto;
+    background: var(--rule);
+    position: relative; overflow: hidden;
+  }
+  .loading-bar::after {
+    content: ""; position: absolute; inset: 0;
+    background: var(--accent);
+    animation: slide 1.6s ease-in-out infinite;
+  }
+  @keyframes slide {
+    0%   { transform: translateX(-100%); }
+    50%  { transform: translateX(0); }
+    100% { transform: translateX(100%); }
+  }
+
+  /* ── Caption (under image) ─────────────────────────── */
+  .caption {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 14px 4px 0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .caption .right { color: var(--accent); }
+
+  /* ── Footer ────────────────────────────────────────── */
+  .colophon {
+    margin-top: 64px;
+    padding-top: 18px;
+    border-top: 1px solid var(--ink);
+    display: flex; justify-content: space-between;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* ── Page-load reveal ──────────────────────────────── */
+  .reveal { opacity: 0; transform: translateY(8px); animation: reveal 0.7s ease-out forwards; }
+  .reveal:nth-of-type(1) { animation-delay: 0.05s; }
+  .reveal:nth-of-type(2) { animation-delay: 0.15s; }
+  .reveal:nth-of-type(3) { animation-delay: 0.25s; }
+  .reveal:nth-of-type(4) { animation-delay: 0.35s; }
+  @keyframes reveal { to { opacity: 1; transform: translateY(0); } }
+
+  @media (max-width: 720px) {
+    .page { padding: 20px 24px 60px; }
+    .title-block { grid-template-columns: 1fr; gap: 24px; }
+    .settings-grid, .controls { grid-template-columns: 1fr; gap: 24px; }
+    .plate-grid { grid-template-columns: 1fr; padding: 20px; }
+    .submit-row { flex-direction: column; align-items: flex-start; }
+    textarea { min-height: 150px; font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+
+    <!-- Masthead -->
+    <header class="masthead reveal">
+      <div class="left">
+        <span>Prompt &amp; Image</span>
+        <span class="dot">●</span>
+        <span>Vol. 01</span>
+      </div>
+      <div>An image is a sentence made visible</div>
+    </header>
+
+    <!-- Title -->
+    <section class="title-block">
+      <h1 class="reveal">Make a picture<br>from <em>words.</em></h1>
+      <p class="lede reveal">A small instrument for translating a sentence into a single frame — quiet, deliberate, and unhurried.</p>
+    </section>
+
+    <!-- API configuration -->
+    <section class="settings-section">
+      <div class="section-label reveal">
+        <span class="num">I.</span><span>Connection</span><span class="rule"></span>
+      </div>
+      <div class="settings-grid">
+        <div class="field reveal">
+          <label for="apiBaseUrl">API URL</label>
+          <input id="apiBaseUrl" type="url" autocomplete="url" placeholder="https://example.com/v1">
+        </div>
+        <div class="field reveal">
+          <label for="apiKey">API Key</label>
+          <div class="secret-control">
+            <input id="apiKey" type="password" autocomplete="off" placeholder="sk-…">
+            <button class="key-toggle" id="keyToggle" type="button" onclick="toggleApiKey()">Show</button>
+          </div>
+        </div>
+        <div class="config-actions reveal">
+          <button id="saveConfigBtn" type="button" onclick="saveConfig()">Save</button>
+          <span class="config-status" id="configStatus"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Prompt -->
+    <section class="prompt-section">
+      <div class="section-label reveal">
+        <span class="num">II.</span><span>Prompt</span><span class="rule"></span>
+      </div>
+      <textarea id="prompt" class="reveal" placeholder="Describe what you wish to see…">A small red apple on a linen table, morning light, soft shadows</textarea>
+    </section>
+
+    <!-- Controls -->
+    <section class="controls">
+      <div class="field reveal">
+        <label>Model</label>
+        <select id="model">
+          <option value="gpt-image-1.5">gpt-image-1.5</option>
+          <option value="gpt-image-2">gpt-image-2</option>
+          <option value="grok-imagine-image">grok-imagine-image</option>
+        </select>
+      </div>
+      <div class="field reveal">
+        <label>Format</label>
+        <select id="size">
+          <option value="256x256">256 × 256</option>
+          <option value="512x512" selected>512 × 512</option>
+          <option value="1024x1024">1024 × 1024</option>
+        </select>
+      </div>
+      <div class="field reveal">
+        <label>Count</label>
+        <select id="count">
+          <option value="1" selected>1 plate</option>
+          <option value="2">2 plates</option>
+          <option value="3">3 plates</option>
+          <option value="4">4 plates</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- Submit -->
+    <div class="submit-row">
+      <button id="btn" class="reveal" onclick="generate()">
+        Generate <span class="arrow">→</span>
+      </button>
+      <span class="hint reveal">⌘ + &crarr;</span>
+    </div>
+
+    <!-- Result -->
+    <section class="result-section">
+      <div class="section-label">
+        <span class="num">III.</span><span>Plate</span><span class="rule"></span>
+      </div>
+      <div class="result-frame" id="result">
+        <div class="placeholder">
+          <span class="glyph">❦</span>
+          The image will appear here.
+        </div>
+      </div>
+      <div class="caption" id="caption" style="display:none">
+        <span id="cap-left">—</span>
+        <span class="right" id="cap-right">—</span>
+      </div>
+    </section>
+
+    <!-- Colophon -->
+    <footer class="colophon">
+      <span>Set in Newsreader &amp; JetBrains Mono</span>
+      <span>Issued by dss.josiny.com</span>
+    </footer>
+  </div>
+
+<script>
+function setConfigStatus(message, isError = false) {
+  const status = document.getElementById('configStatus');
+  status.textContent = message;
+  status.classList.toggle('error', isError);
+}
+
+async function loadConfig() {
+  try {
+    const response = await fetch('/api/config');
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.detail || 'Unable to load configuration');
+    document.getElementById('apiBaseUrl').value = data.base_url || '';
+    document.getElementById('apiKey').value = data.api_key || '';
+    setConfigStatus(data.api_key ? 'Configuration loaded' : 'API Key required', !data.api_key);
+  } catch (error) {
+    setConfigStatus(error.message, true);
+  }
+}
+
+async function saveConfig() {
+  const baseUrl = document.getElementById('apiBaseUrl').value.trim();
+  const apiKey = document.getElementById('apiKey').value.trim();
+  const button = document.getElementById('saveConfigBtn');
+  button.disabled = true;
+  button.textContent = 'Saving…';
+  setConfigStatus('Saving');
+
+  try {
+    const response = await fetch('/api/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ base_url: baseUrl, api_key: apiKey }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.detail || 'Unable to save configuration');
+    document.getElementById('apiBaseUrl').value = data.base_url;
+    document.getElementById('apiKey').value = data.api_key;
+    setConfigStatus('Saved · active now');
+  } catch (error) {
+    setConfigStatus(error.message, true);
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Save';
+  }
+}
+
+function toggleApiKey() {
+  const input = document.getElementById('apiKey');
+  const toggle = document.getElementById('keyToggle');
+  const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  toggle.textContent = show ? 'Hide' : 'Show';
+}
+
+function generate() {
+  const prompt = document.getElementById('prompt').value.trim();
+  const model  = document.getElementById('model').value;
+  const size   = document.getElementById('size').value;
+  const n      = Number(document.getElementById('count').value);
+  const btn    = document.getElementById('btn');
+  const result = document.getElementById('result');
+  const cap    = document.getElementById('caption');
+
+  if (!prompt) { flashEmpty(); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = 'Generating <span class="arrow">…</span>';
+  cap.style.display = 'none';
+  result.innerHTML = `
+    <div class="loading">
+      <div class="loading-label" id="loadingLabel"></div>
+      <div class="loading-bar"></div>
+    </div>`;
+  const lbl = n > 1 ? `Generating ${n} plates` : "Generating";
+  document.getElementById('loadingLabel').innerHTML =
+    [...lbl].map(c => c === ' ' ? '<span>&nbsp;</span>' : `<span>${c}</span>`).join('');
+
+  const t0 = Date.now();
+  fetch('/api/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt, model, size, n }),
+  })
+  .then(r => r.json().then(d => ({ ok: r.ok, d })))
+  .then(({ ok, d }) => {
+    if (!ok) throw new Error(d.detail || 'Failed');
+    const images = Array.isArray(d.images) && d.images.length ? d.images : [{ data_url: d.data_url }];
+    result.innerHTML = `
+      <div class="plate-grid ${images.length === 1 ? 'single' : ''}">
+        ${images.map((image, index) => `<img src="${image.file_url || image.data_url}" alt="plate ${index + 1}">`).join('')}
+      </div>`;
+    const sec = ((Date.now() - t0) / 1000).toFixed(1);
+    const plateLabel = images.length === 1 ? 'Plate I' : `Plates I–${images.length}`;
+    document.getElementById('cap-left').textContent  = `${plateLabel} · ${d.model} · ${d.size}`;
+    const saved = images.every(image => image.file_path) ? ' · saved to output/' : '';
+    document.getElementById('cap-right').textContent = `Engraved in ${sec}s${saved}`;
+    cap.style.display = 'flex';
+  })
+  .catch(e => {
+    result.innerHTML = `<div class="error">${e.message}</div>`;
+  })
+  .finally(() => {
+    btn.disabled = false;
+    btn.innerHTML = 'Generate <span class="arrow">→</span>';
+  });
+}
+
+function flashEmpty() {
+  const ta = document.getElementById('prompt');
+  ta.style.borderBottomColor = 'var(--accent)';
+  ta.placeholder = 'A prompt is required…';
+  setTimeout(() => {
+    ta.style.borderBottomColor = '';
+    ta.placeholder = 'Describe what you wish to see…';
+  }, 1600);
+}
+
+document.getElementById('model').addEventListener('change', e => {
+  const isGrok = e.target.value === 'grok-imagine-image';
+  const size = document.getElementById('size');
+  const count = document.getElementById('count');
+  size.value = isGrok ? '1024x1024' : size.value;
+  count.value = isGrok ? '1' : count.value;
+  [...size.options].forEach(option => option.disabled = isGrok && option.value !== '1024x1024');
+  [...count.options].forEach(option => option.disabled = isGrok && option.value !== '1');
+});
+
+document.getElementById('prompt').addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generate();
+});
+
+loadConfig();
+</script>
+</body>
+</html>
